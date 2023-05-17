@@ -38,4 +38,46 @@ public class PasswordStrengthMeterTest {
         assertStrength("ab!@ABqwer", PasswordStrength.NORMAL);
 
     }
+
+    // 네번째 테스트
+    // 값이 없는 경우
+    @Test
+    void nullInput_Then_Invalid() {
+        assertStrength(null, PasswordStrength.INVALID);
+    }
+
+    @Test
+    void emptyInput_Then_Invalid() {
+        assertStrength("", PasswordStrength.INVALID);
+    }
+
+    // 다섯번째 테스트
+    // 대문자를 포함하지 않고 나머지 조건을 충족하는 경우
+    @Test
+    void meetsOtherCriteria_except_for_Uppercase_Then_Normal() {
+        assertStrength("ab12!@df", PasswordStrength.NORMAL);
+    }
+
+    // 여섯번째 테스트
+    // 길이가 8글자 이상인 조건만 충족하는 경우
+    // 이제 남은 것은 한가지 조건만 충족하거나 모든 조건을 충족하지 않는 경우
+    // 한가지만 충족 -> 약함
+    @Test
+    void meetsOnlyLengthCreteria_Then_Weak() {
+        assertStrength("abdefghi", PasswordStrength.WEAK);
+    }
+
+    // 일곱번째 테스트
+    // 숫자 포함 조건만 충족하는 경우
+    @Test
+    void meetsOnlyNumCriteria_Then_Weak() {
+        assertStrength("12345", PasswordStrength.WEAK);
+    }
+
+    // 여덟번째 테스트
+    // 대문자 포함 조건만 충족하는 경우
+    @Test
+    void meetsOnlyUpperCriteria_Then_Weak() {
+        assertStrength("ABZEF", PasswordStrength.WEAK);
+    }
 }
