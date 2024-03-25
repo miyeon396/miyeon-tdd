@@ -167,3 +167,118 @@ pom파일에 junit 의존성 추가
 - 테스트 대상의 상황과 결과에 외부 요인이 관여하는 경우 대역을 사용하면 테스트가 쉬워짐
   - 대역 : 테스트 대상이 의존하는 대상의 실제 구현을 대신하는 구현. 이를 통해 외부 상황, 결과 대체 가능
 
+
+### 7. 대역 
+- 테스트 진행 시 외부 요인이 필요한 시점
+  - 테스트 대상에서 파일 시스템을 사용
+  - DB로부터 데이터를 조회하거나 데이터를 추가
+  - 테스트 대상에서 외부의 HTTP 서버와 통신 
+
+- 테스트 대상에서 의존하는 요인 때문에 테스트가 어려울 때는 대역을 써서 테스트를 진행
+- **대역의 종류**  ****
+  - 스텁(Stub)
+    - 구현을 단순한 것으로 대체한다.
+    - 테스트에 맞게 단순히 원하는 동작을 수행한다.
+    - ex) StubCardNumberValidator가 스텁 대역에 해당
+  - 가짜(Fake)
+    - 제품에는 적합하지 않지만 실제 동작하는 구현을 제공한다.
+    - DB 대신에 메모리를 이용해서 구현하는 등
+    - ex) MemoryAutoDebitInfoRepository가 가짜 대역에 해당
+  - 스파이(Spy)
+    - 호출된 내역을 기록한다.
+    - 기록한 내용은 테스트 결과를 검증할 떄 사용한다.
+    - 스텁이기도 하다.
+  - 모의 객체(Mock)
+    - 기대한 대로 상호작용 하는지 행위를 검증
+    - 기대한 대로 동작하지 않으면 익셉션을 발생할 수 있다.
+    - 모의객체는 스텁이자 스파이일 수도 있다.
+- 구현하기 전에 모든 기능을 설계 불가능 -> 개발진행시 요구사항 계쏙 바뀔수도 있어서
+
+#### 상황과 결과 확인을 위한 협업 대상(의존) 도출과 대역 사용
+- 한 테스트는 특정한 상황에서 기능을 실행하고 그 결과를 확인
+- 실제 구현을 이용하면 상황을 만들기 어려울 때가 많음
+- 제어가 힘든 외부 상황 존재시 다음 방법으로 의존 도출 및 대역으로 이용
+  - 제어하기 힘든 외부 상황을 별도 타입으로 분리 ex) StubCardValidator
+  - 테스트 코드는 별도로 분리한 타입의 대역을 생성
+  - 생성한 대역을 테스트 대상의 생성자 등을 이용해서 전달
+  - 대역을 이용해서 상황 구성
+- 당장 구현하는데 시간이 오래 걸리는 로직도 분리하기에 좋은 후보.
+
+#### 대역과 개발 속도
+- 대역은 의존하는 대상을 구현하지 않아도 테스트 대상을 완성할 수 있게 만들어 주고 대기시간 줄여줘 개발 속도 올림
+  - 대역 사용시 실제 구현 없어도 다양한 상황에서 테스트 가능
+  - 대역을 사용하면 실제 구현이 없어도 실행 결과 확인 가능
+
+#### 모의 객체를 과하게 사용하지 않기!
+- 모의 객체는 스텁과 스파이를 지원하므로 대역으로 모의객체 많이 사용
+- 하지만 모의객체 과하게 사용하면 오히려 테스트 코드가 복잡해지는 경우도 있음.
+- dao나 리포지토리 같이 저장소에 대한 대역은 모의 객체를 사용하는 것 보다 메모리를 이용한 가짜 구현을 사용하는 것이 테스트 코드 관리에 유리하다.
+  - 첨엔 더 걸릴 수 있으나 일단 가짜 대역을 구현하면 모의객체를 사용할때 보다 테스트 코드 간결 관리 쉬움
+
+
+---
+
+### 부록C. Mockito 기초 사용법
+- Mockito : 모의 객체 생성, 검증, 스텁을 지원하는 fw
+- 사용하려면 mokcito-core 모듈 추가
+
+#### 모의 객체 생성
+- Mocito.mock()
+
+#### 스텁 설정
+- 모의객체를 생성한 뒤에 BDDMockito 클래스를 이용해서 모의 객체에 스텁을 구성할 수 있다.
+- BDDMockito.given() 메서드 이용
+  - 스텁을 정의할 모의객체의 메서드 호출을 전달
+- given()에 이어 willReturn() 메서드는 스텁을 정의한 메서드가 리턴할 값을 지정
+- ex)
+  - (1) 모의 객체 생성 : GameNumGen genMock = mock(GameNumGen.class)
+  - (2) 스텁 설정 : given(genMock.generate(GameLevel.EASY)).willReturn("123");
+  - (3) 스텁 설정에 매칭되는 메서드 실행 : String num = genMock.generate(GameLevel.EASY)
+- 지정한 값 리턴하는 대신 익셉션 발생하게 설정 willTrhow(IllegalArgumentException.class)
+
+#### 인자 매칭 처리
+- Mockito는 일치하는 스텁 설정이 없을 경우 리턴 타입의 기본 값을 리턴한다.
+  - ex) int 0, boolean false 기본 데이터 타입이 아닌 String/List와 같은 참조 타입이면 null
+- Mockito.ArgumentMatchers클래스 사용시 정확하게 일치하는값 대신 임의의 값 일치하도록 설정 가능
+  - any(), anyInt, anyShort(), anyLong, ... anyList, any(), matches(String), matches(Pattern), eq(값)
+- 스텁을 설정할 메서드의 인자가 두개 이상인 경우 주의
+- 임의의 값과 일치하는 인자와 정확하게 일치하는 인자를 함께 사용하고 싶다면 ArgumentMatchers.eq()
+
+
+#### 행위 검증
+- 모의 객체의 역할 중 하나는 실제로 모의 객체가 불렸는지 검증하는 것
+- BDDMockito.then() : 메서드 호출 여부를 검증할 모의 객체를 전달 받는다.
+- should() : 모의 객체의 메서드가 불려야 한다는 것을 설정하고 뒤에 실제 불려야할 메서드 지정
+- ex) then(genMock).should().generate(GameLevel.EASY);
+- 정확한 값이 아닌 메서드가 불렸는지 여부가 중요하면 any, anyInt...
+  - ex) then(genMock).should().generate(any());
+- 정확하게 한번만 호출된 것 검증
+  - ex) then(genMock).should(only()).generate(any());
+- 메서드 호출 횟수 검증 위해 Mockito 클래스가 제공하는 메서드
+  - only() : 한번만 호출
+  - times(int) : 지정 횟수만큼 호출
+  - never() : 호출x
+  - atLeast(int) : 적어도 지정한 횟수만큼
+  - atLeatOnce : atLeast(1)
+  - atMost(int) : 최대 지정한 횟수만큼
+
+#### 인자 캡처
+  - 모의 객체 호출 할 때 사용한 인자 검증 해야할 떄 있음
+  - Mockito의 ArgumentCaptor : 메서드 호출 여부를 검증하는 과정에서 실제 호출할 때 전달한 인자 보관
+    ```
+    ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class)
+    then(mockEmailNotifiler).sholud().sendRegisterEmail(captor.capture());
+    String relEmail = captor.getValue();
+    assertEquals("email@email.com", realEmail);
+    ```
+
+#### Junit5 확장 설정
+- Mockito의 Junit5 확장 기능을 사용하면 애노테이션을 이용해서 모의 객체 생성 가능
+- mockito-junit-jupitor -> Mocito Extension 사용 가능
+- @Mock : 붙인 필드에 대해 자동으로 모의 객체 생성해줌
+  ```
+  @ExtendWith(MocktoExtension.class)
+  public class Junit5ExtensionTest() {
+  @Mock
+  private GameNumGen genMock;
+  ```

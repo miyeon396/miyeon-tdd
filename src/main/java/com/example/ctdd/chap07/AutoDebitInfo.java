@@ -1,0 +1,31 @@
+package com.example.ctdd.chap07;
+
+import java.time.LocalDateTime;
+
+public class AutoDebitInfo {
+    private final String userId;
+    private String cardNumber;
+    private final LocalDateTime registerDate;
+
+    public AutoDebitInfo(String userId, String cardNumber, LocalDateTime registerDate) {
+        this.userId = userId;
+        this.cardNumber = cardNumber;
+        this.registerDate = registerDate;
+    }
+
+    public void changeCardNumber(String cardNumber) {
+        this.cardNumber = cardNumber;
+    }
+
+    public String getUserId() {
+        return userId;
+    }
+
+    public String getCardNumber() {
+        return cardNumber;
+    }
+
+    public LocalDateTime getRegisterDate() {
+        return registerDate;
+    }
+}
